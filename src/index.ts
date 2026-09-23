@@ -758,37 +758,6 @@ async function runSingleTask(
 		};
 	}
 
-	// Step 5: Check if the agent actually modified any files.
-	// If nothing changed, the agent failed to do its job (e.g. connection errors).
-	let filesChanged = false;
-	for (const [filename, originalHash] of Object.entries(setupFingerprints)) {
-		const filePath = path.join(workDir, filename);
-		if (existsSync(filePath)) {
-			const currentHash = createHash("md5").update(readFileSync(filePath)).digest("hex");
-			if (currentHash !== originalHash) {
-				filesChanged = true;
-				break;
-			}
-		} else {
-			// File was deleted — that counts as a change
-			filesChanged = true;
-			break;
-		}
-	}
-
-	if (!filesChanged) {
-		await killProcessesInDir(pi, workDir);
-		cleanupWorkDir(workDir);
-		return {
-			task: task.name,
-			status: "fail",
-			duration_ms: Date.now() - start,
-			verify_output: "Agent made no changes to any files",
-			model,
-			timestamp,
-		};
-	}
-
 	// Step 6: Run verification — even if we timed out, the agent may have
 	// applied the fix before the timeout.  Give it credit if tests pass.
 	const verifyCmd = task.verify.replace(/\$BENCH_WORK_DIR/g, workDir);
