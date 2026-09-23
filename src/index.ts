@@ -625,7 +625,7 @@ async function runSingleTask(
 
 	// Step 1: Create a temp workspace with our distinctive prefix so cleanup
 	// can target only directories we own. Produces $TMPDIR/pi-bench.XXXXXX.
-	const mkdirResult = await pi.exec("bash", ["-lc", `mktemp -d -t ${WORKDIR_PREFIX}`]);
+	const mkdirResult = await pi.exec("bash", ["-lc", `mktemp -d -t ${WORKDIR_PREFIX}.XXXXXX`]);
 	const workDir = mkdirResult.stdout.trim();
 
 	if (!workDir || mkdirResult.code !== 0 || !isOwnedWorkDir(workDir)) {
