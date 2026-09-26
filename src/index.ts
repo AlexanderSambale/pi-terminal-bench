@@ -2,6 +2,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync, appendFileSync, ex
 import { createHash } from "node:crypto";
 import path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { spawn } from "node:child_process";
 
 const PACKAGE_DIR = path.resolve(__dirname, "..");
 const TASKS_DIR = path.join(PACKAGE_DIR, "tasks");
@@ -329,7 +330,7 @@ export default function terminalBench(pi: ExtensionAPI) {
 					ctx.ui.setStatus(STATUS_KEY, `bench: ${passed}/${i} passed | running ${task.name} (${i + 1}/${total})`);
 				}
 
-				const result = await runSingleTask(pi, ctx, task, selectedModel);
+				const result = await runSingleTask(pi, task, selectedModel);
 				results.push(result);
 
 				if (result.status === "pass") {
@@ -616,7 +617,6 @@ export default function terminalBench(pi: ExtensionAPI) {
  */
 async function runSingleTask(
 	pi: ExtensionAPI,
-	ctx: any,
 	task: TaskDef,
 	model: string,
 ): Promise<TaskResult> {
@@ -669,94 +669,61 @@ async function runSingleTask(
 		`Work only within that directory. Do not modify files outside it.`,
 	].join("\n");
 
-	pi.sendUserMessage(instruction, { deliverAs: "followUp" });
-
-	// Step 4: Wait for the agent to actually pick up the message and finish,
-	// with a timeout to prevent runaway tasks (e.g. infinite loops in tests).
 	const taskTimeout = task.timeout || 180000; // default 3 minutes
-	let timedOut = false;
 
-	// Brief yield to let the message get queued
-	await new Promise((r) => setTimeout(r, 100));
-
-	// Wait for agent to start processing (not idle) or for message to be consumed
-	const waitStart = Date.now();
-	while (ctx.isIdle() && ctx.hasPendingMessages() && Date.now() - waitStart < 10000) {
-		if (Date.now() - start > taskTimeout) { timedOut = true; break; }
-		await new Promise((r) => setTimeout(r, 100));
-	}
-
-	// Now wait for the agent to actually finish, polling with timeout checks
-	if (!timedOut) {
-		while (!ctx.isIdle() || ctx.hasPendingMessages()) {
-			if (Date.now() - start > taskTimeout || ctx.signal?.aborted) break;
-			// Poll in short intervals so we can check the timeout
-			await new Promise((r) => setTimeout(r, 500));
-		}
-		if (Date.now() - start > taskTimeout) timedOut = true;
-	}
-
-	// Process timeout: a command the model ran likely hung (e.g. running
-	// tests on buggy code with an infinite loop).  Kill the hung process
-	// and tell the model what happened so it can fix the code and retry.
-	// Keep waiting — don't end the task yet.
-	if (timedOut) {
-		// Queue the steer message BEFORE killing the process.
-		// "steer" messages are held while a tool call is active and
-		// delivered the instant it finishes.  By queuing first, the
-		// model sees the timeout explanation immediately after the
-		// empty tool result — no gap where it's confused by "(no output)".
-		pi.sendUserMessage(
-			[
-				`[Benchmark] The command you just ran was killed because it exceeded the ${Math.round(taskTimeout / 1000)}s time limit.`,
-				`This usually means the code has an infinite loop or hangs on certain inputs.`,
-				`Fix the bug and try again. The files are in: ${workDir}`,
-			].join(" "),
-			{ deliverAs: "steer" },
+	await new Promise((resolve, reject) => {
+		const child = spawn(
+			"bash",
+			["-lc", `pi --model ${model} --print ${instruction}`],
+			{
+				stdio: ["ignore", "pipe", "pipe"],
+			}
 		);
 
-		await killProcessesInDir(pi, workDir);
+		let stdout = "";
+		let stderr = "";
 
-		// Give the model more time to fix the code and re-run tests.
-		// Extended timeout = 2x the original task timeout.
-		const extendedTimeout = taskTimeout * 2;
-		const extendedDeadline = start + extendedTimeout;
+		child.stdout.on("data", (data) => {
+			stdout += data;
+		});
 
-		while (!ctx.isIdle() || ctx.hasPendingMessages()) {
-			if (Date.now() > extendedDeadline || ctx.signal?.aborted) break;
-			await new Promise((r) => setTimeout(r, 500));
-		}
+		child.stderr.on("data", (data) => {
+			stderr += data;
+		});
 
-		// If we hit the extended timeout, the model is truly stuck.
-		if (Date.now() > extendedDeadline && (!ctx.isIdle() || ctx.hasPendingMessages())) {
-			await killProcessesInDir(pi, workDir);
-			cleanupWorkDir(workDir);
-			return {
-				task: task.name,
-				status: "timeout",
-				duration_ms: Date.now() - start,
-				verify_output: `Task timed out after ${Math.round(extendedTimeout / 1000)}s (including retry window)`,
-				model,
-				timestamp,
-			};
-		}
+		const timeout = setTimeout(() => {
+			child.kill("SIGTERM");
+			reject(new Error("Execution timed out"));
+		}, taskTimeout);
 
-		// Model finished — fall through to the normal verification below.
-	}
+		child.on("error", (error) => {
+			clearTimeout(timeout);
+			reject(error);
+		});
 
-	// Check if user aborted
-	if (ctx.signal?.aborted) {
-		await killProcessesInDir(pi, workDir);
-		cleanupWorkDir(workDir);
-		return {
-			task: task.name,
-			status: "error",
-			duration_ms: Date.now() - start,
-			verify_output: "Aborted by user",
-			model,
-			timestamp,
-		};
-	}
+		child.on("close", async (code) => {
+			clearTimeout(timeout);
+
+			if (code === 0) {
+				resolve({
+					stdout,
+					stderr,
+					code,
+				});
+			} else {
+				await killProcessesInDir(pi, workDir);
+				cleanupWorkDir(workDir);
+				return {
+					task: task.name,
+					status: "timeout",
+					duration_ms: Date.now() - start,
+					verify_output: `Task timed out after ${Math.round(taskTimeout / 1000)}s`,
+					model,
+					timestamp,
+				};
+			}
+		});
+	});
 
 	// Step 6: Run verification — even if we timed out, the agent may have
 	// applied the fix before the timeout.  Give it credit if tests pass.
