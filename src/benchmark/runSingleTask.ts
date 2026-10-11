@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { spawn, SpawnOptionsWithoutStdio } from "node:child_process";
 import type { SpawnWithExitCode, TaskDef, TaskResult, VerificationResult } from "./types.ts";
-import { WORKDIR_PREFIX } from "./constants.ts";
+import { LOGS_DIR, WORKDIR_PREFIX } from "./constants.ts";
 import { isOwnedWorkDir, killProcessesInDir, cleanupWorkDir, registerWorkDir } from "./cleanup.ts";
 import path from "node:path";
 
@@ -48,7 +48,6 @@ async function spawnAsync(command: string, args?: readonly string[] | undefined,
     child.on('close', (code, signal) => {
       resolve({
         code,
-        signal,
         stdout,
         stderr,
       });
@@ -64,7 +63,9 @@ async function runVerification(task: TaskDef, workDir: string): Promise<Verifica
 	return { status: verifyResult.code === 0 ? "pass" : "fail", verify_output };
 }
 
-async function runPi(task: TaskDef, workDir: string, model: string, start: number, timestamp: string) {
+
+
+async function runPi(task: TaskDef, workDir: string, model: string): Promise<SpawnWithExitCode> {
 	const instruction = [
 		`[Benchmark Task: ${task.name}]`,
 		"",
@@ -89,11 +90,11 @@ async function runPi(task: TaskDef, workDir: string, model: string, start: numbe
 		let stderr = "";
 
 		child.stdout.on("data", (data) => {
-			stdout += data;
+			stdout += data +"\n-----\n";
 		});
 
 		child.stderr.on("data", (data) => {
-			stderr += data;
+			stderr += data +"\n-----\n";
 		});
 
 		const timeout = setTimeout(() => {
@@ -108,25 +109,20 @@ async function runPi(task: TaskDef, workDir: string, model: string, start: numbe
 
 		child.on("close", async (code) => {
 			clearTimeout(timeout);
-
-			if (code === 0) {
-				resolve({
-					stdout,
-					stderr,
-					code,
-				});
-			} else {
-				return resolve({
-					task: task.name,
-					status: "timeout",
-					duration_ms: Date.now() - start,
-					verify_output: `Task timed out after ${Math.round(taskTimeout / 1000)}s`,
-					model,
-					timestamp,
-				});
-			}
+			return resolve({
+				stdout,
+				stderr,
+				code,
+			});
 		});
 	});
+}
+
+function writePiLogs(taskName: string, stdout: string, stderr: string) {
+	const ts = new Date().toISOString().replace(/[:.]/g, "-");
+	const resultFile = path.join(LOGS_DIR, `run-${taskName}-${ts}.json`);
+	const fileContent = stdout + "\n\n-----\nerr:\n\n" + stderr;
+	writeFileSync(resultFile, fileContent);
 }
 
 /** Run a single benchmark task end-to-end using pure Node.js — no ExtensionAPI. */
@@ -146,7 +142,19 @@ export async function runSingleTask(
 	registerWorkDir(workDir);
 
 	writeSetupFiles(task, workDir);
-	await runPi(task, workDir, model, start, timestamp);
+	const { stdout, stderr, code }= await runPi(task, workDir, model);
+	writePiLogs(task.name, stdout, stderr);
+	if(code !== 0) {
+		return {
+			task: task.name,
+			status: "timeout",
+			duration_ms: Date.now() - start,
+			verify_output: `Task timed out after ${Math.round((task.timeout || 180000) / 1000)}s`,
+			model,
+			timestamp,
+		};
+	}
+
 	const { status , verify_output } = await runVerification(task, workDir);
 
 	killProcessesInDir(workDir);

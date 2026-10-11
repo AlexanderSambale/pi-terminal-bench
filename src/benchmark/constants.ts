@@ -10,6 +10,7 @@ export const PACKAGE_DIR = path.resolve(__dirname, "../..");
 export const TASKS_DIR = path.join(PACKAGE_DIR, "tasks");
 export const STATE_DIR = path.join(PACKAGE_DIR, "state");
 export const RESULTS_DIR = path.join(STATE_DIR, "results");
+export const LOGS_DIR = path.join(STATE_DIR, "logs");
 export const STATUS_KEY = "terminal-bench";
 
 // All benchmark workspaces are named with this prefix so cleanup can

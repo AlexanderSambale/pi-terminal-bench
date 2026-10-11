@@ -1,9 +1,9 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { runSingleTask } from "./runSingleTask.ts";
 import * as path from "node:path";
 import type { ResolvedTasks, RunTask, TaskDef, TaskResult, TaskResults, TaskResultsStats, UIAdapter } from "./types.ts";
-import { RESULTS_DIR, STATUS_KEY } from "./constants.ts";
+import { LOGS_DIR, RESULTS_DIR, STATUS_KEY } from "./constants.ts";
 import { formatCategorySummary as fmtCatSummaryRaw, listTasks, loadTask } from "./tasks.ts";
 
 
@@ -129,6 +129,10 @@ function updateUIAfterTask(ui: UIAdapter, isBatch: boolean, index: number, total
 async function taskLoop(ui: UIAdapter, tasks: TaskDef[], isBatch: boolean, selectedModel: string, taskResultsStats: TaskResultsStats, runTask: RunTask): Promise<TaskResults> {
 	const results: TaskResult[] = [];
 	let { total, passed, failed } = taskResultsStats;
+
+	mkdirSync(RESULTS_DIR, { recursive: true });
+	mkdirSync(LOGS_DIR, { recursive: true });
+
 	for (let i = 0; i < total; i++) {
 		const task = tasks[i];
 

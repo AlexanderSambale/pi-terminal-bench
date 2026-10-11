@@ -17,7 +17,6 @@ export function registerWorkDir(dir: string): void {
 	if (!isOwnedWorkDir(dir)) return;
 	activeWorkDirs.add(dir);
 	try {
-		mkdirSync(RESULTS_DIR, { recursive: true });
 		appendFileSync(REGISTRY_FILE, dir + "\n");
 	} catch { /* best-effort */ }
 }

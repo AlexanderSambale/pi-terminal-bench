@@ -55,7 +55,6 @@ export type UIAdapter = {
 
 export interface SpawnWithExitCode {
 	code: number | null,
-	signal: NodeJS.Signals | null,
 	stdout: string,
 	stderr: string,
 }
