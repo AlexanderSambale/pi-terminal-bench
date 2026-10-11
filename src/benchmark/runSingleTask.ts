@@ -142,9 +142,20 @@ export async function runSingleTask(
 	registerWorkDir(workDir);
 
 	writeSetupFiles(task, workDir);
-	const { stdout, stderr, code }= await runPi(task, workDir, model);
-	writePiLogs(task.name, stdout, stderr);
-	if(code !== 0) {
+	try {
+		const { stdout, stderr, code }= await runPi(task, workDir, model);
+		writePiLogs(task.name, stdout, stderr);
+		if(code !== 0) {
+			return {
+				task: task.name,
+				status: "timeout",
+				duration_ms: Date.now() - start,
+				verify_output: `Task timed out after ${Math.round((task.timeout || 180000) / 1000)}s`,
+				model,
+				timestamp,
+			};
+		}
+	} catch {
 		return {
 			task: task.name,
 			status: "timeout",
