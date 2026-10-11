@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
-import { WORKDIR_PREFIX, REGISTRY_FILE, STATE_DIR } from "./constants.ts";
+import { WORKDIR_PREFIX, REGISTRY_FILE, RESULTS_DIR } from "./constants.ts";
 
 /** Workspaces currently owned by a running task. Swept on session shutdown. */
 const activeWorkDirs = new Set<string>();
@@ -17,7 +17,7 @@ export function registerWorkDir(dir: string): void {
 	if (!isOwnedWorkDir(dir)) return;
 	activeWorkDirs.add(dir);
 	try {
-		mkdirSync(STATE_DIR, { recursive: true });
+		mkdirSync(RESULTS_DIR, { recursive: true });
 		appendFileSync(REGISTRY_FILE, dir + "\n");
 	} catch { /* best-effort */ }
 }
