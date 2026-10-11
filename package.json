@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/latent-variable/pi-terminal-bench#readme",
   "files": [
-    "src",
+    "dist",
     "tasks",
     "README.md",
     "LICENSE",
@@ -32,10 +32,17 @@
     "@mariozechner/pi-coding-agent": "*"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4"
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
+  },
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "pi-terminal-bench": "./dist/cli.js"
   },
   "scripts": {
-    "bench": "bun src/cli.ts",
+    "build": "tsc",
+    "bench": "node dist/cli.js",
     "typecheck": "tsc --noEmit"
   }
 }
