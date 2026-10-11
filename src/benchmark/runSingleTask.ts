@@ -79,7 +79,7 @@ async function runPi(task: TaskDef, workDir: string, model: string, start: numbe
 	return await new Promise((resolve, reject) => {
 		const child = spawn(
 			"bash",
-			["-lc", `pi --model ${model} --print ${instruction}`],
+			["-lc", `pi --model "${model}" --print "${instruction}"`],
 			{
 				stdio: ["ignore", "pipe", "pipe"],
 			}
