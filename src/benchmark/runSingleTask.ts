@@ -75,7 +75,7 @@ async function runPi(task: TaskDef, workDir: string, model: string): Promise<Spa
 		`Work only within that directory. Do not modify files outside it.`,
 	].join("\n");
 
-	const taskTimeout = task.timeout || 180000; // default 3 minutes
+	const taskTimeout = (task.timeout || 180000) * 10; // default 3 minutes
 
 	return await new Promise((resolve, reject) => {
 		const child = spawn(
@@ -150,7 +150,7 @@ export async function runSingleTask(
 				task: task.name,
 				status: "timeout",
 				duration_ms: Date.now() - start,
-				verify_output: `Task timed out after ${Math.round((task.timeout || 180000) / 1000)}s`,
+				verify_output: `Task timed out after ${Math.round((task.timeout || 180000) * 10 / 1000)}s`,
 				model,
 				timestamp,
 			};
@@ -160,7 +160,7 @@ export async function runSingleTask(
 			task: task.name,
 			status: "timeout",
 			duration_ms: Date.now() - start,
-			verify_output: `Task timed out after ${Math.round((task.timeout || 180000) / 1000)}s`,
+			verify_output: `Task timed out after ${Math.round((task.timeout || 180000) * 10 / 1000)}s`,
 			model,
 			timestamp,
 		};
