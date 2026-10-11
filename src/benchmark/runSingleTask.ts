@@ -116,8 +116,6 @@ async function runPi(task: TaskDef, workDir: string, model: string, start: numbe
 					code,
 				});
 			} else {
-				killProcessesInDir(workDir);
-				cleanupWorkDir(workDir);
 				return resolve({
 					task: task.name,
 					status: "timeout",
