@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
-import { WORKDIR_PREFIX, REGISTRY_FILE, STATE_DIR } from "./constants";
+import { WORKDIR_PREFIX, REGISTRY_FILE, STATE_DIR } from "./constants.ts";
 
 /** Workspaces currently owned by a running task. Swept on session shutdown. */
 const activeWorkDirs = new Set<string>();

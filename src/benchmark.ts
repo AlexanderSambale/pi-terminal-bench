@@ -1,4 +1,4 @@
-import type { UIAdapter } from "./benchmark/types";
+import type { UIAdapter } from "./benchmark/types.ts";
 
 import {
 	benchListHandler,
@@ -6,10 +6,10 @@ import {
 	benchDoctorHandler,
 	benchResultsHandler,
 	benchCleanupHandler
-} from "./benchmark/commands";
+} from "./benchmark/commands.ts";
 import { execSync } from "node:child_process";
-import { formatCategorySummary } from "./benchmark/tasks";
-import { makeUIAdapter } from "./benchmark/ui";
+import { formatCategorySummary } from "./benchmark/tasks.ts";
+import { makeUIAdapter } from "./benchmark/ui.ts";
 
 /** Session-end stray pi-bench process cleanup. */
 export function _sweepStrays(): number {

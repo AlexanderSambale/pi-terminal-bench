@@ -1,10 +1,10 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { runSingleTask } from "./runSingleTask";
+import { runSingleTask } from "./runSingleTask.ts";
 import * as path from "node:path";
-import type { ResolvedTasks, RunTask, TaskDef, TaskResult, TaskResults, TaskResultsStats, UIAdapter } from "./types";
-import { RESULTS_DIR, STATUS_KEY } from "./constants";
-import { formatCategorySummary as fmtCatSummaryRaw, listTasks, loadTask } from "./tasks";
+import type { ResolvedTasks, RunTask, TaskDef, TaskResult, TaskResults, TaskResultsStats, UIAdapter } from "./types.ts";
+import { RESULTS_DIR, STATUS_KEY } from "./constants.ts";
+import { formatCategorySummary as fmtCatSummaryRaw, listTasks, loadTask } from "./tasks.ts";
 
 
 /** Format the /bench-list category summary (re-exported). */

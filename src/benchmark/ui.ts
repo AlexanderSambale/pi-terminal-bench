@@ -1,6 +1,6 @@
 /** Lightweight notify/status-bar stand-in — mirrors the ExtensionAPI side's semantics. */
 import process from "node:process";
-import type { UIAdapter } from "./types";
+import type { UIAdapter } from "./types.ts";
 
 const RESET = '\x1b[0m';
 const DIM   = '\x1b[2m';

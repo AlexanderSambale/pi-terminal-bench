@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { spawn, SpawnOptionsWithoutStdio } from "node:child_process";
-import type { SpawnWithExitCode, TaskDef, TaskResult, VerificationResult } from "./types";
-import { WORKDIR_PREFIX } from "./constants";
-import { isOwnedWorkDir, killProcessesInDir, cleanupWorkDir, registerWorkDir } from "./cleanup";
+import type { SpawnWithExitCode, TaskDef, TaskResult, VerificationResult } from "./types.ts";
+import { WORKDIR_PREFIX } from "./constants.ts";
+import { isOwnedWorkDir, killProcessesInDir, cleanupWorkDir, registerWorkDir } from "./cleanup.ts";
 import path from "node:path";
 
 async function createTmpWorkspace(start: number, timestamp: string, taskName: string, model: string): Promise<TaskResult | string> {

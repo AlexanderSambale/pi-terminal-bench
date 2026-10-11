@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import type { TaskDef } from "./types";
-import { TASKS_DIR, CATEGORIES } from "./constants";
+import type { TaskDef } from "./types.ts";
+import { TASKS_DIR, CATEGORIES } from "./constants.ts";
 
 /** Load a single task definition by name — tries .json then bare name. */
 export function loadTask(name: string): TaskDef | null {
