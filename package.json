@@ -41,7 +41,7 @@
     "pi-terminal-bench": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp killProcessesInDir.sh dist/",
     "bench": "node dist/cli.js",
     "typecheck": "tsc --noEmit"
   }
