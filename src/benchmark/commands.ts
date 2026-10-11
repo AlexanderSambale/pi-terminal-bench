@@ -77,7 +77,7 @@ function notifyAssessment(
 		assessment += `\n\n  Verification:\n`;
 		for (const vline of result.verify_output.split("\n").slice(0, 15)) assessment += `    ${vline}\n`;
 	}
-	if (isBatch) assessment += `\n  Score: ${passedCount} passed, ${totalCompleted - passedCount} failed out of ${totalCompleted} completed (${total - totalCompleted} remaining)`;
+	if (isBatch) assessment += `\n  Score: ${passedCount} passed, ${totalCompleted - passedCount} failed - out of ${totalCompleted} (${total - totalCompleted} remaining)`;
 	assessment += `\n${line}`;
 	ui.notify(assessment, result.status === "pass" ? "info" : "error");
 }
