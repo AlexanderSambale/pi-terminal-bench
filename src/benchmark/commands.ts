@@ -181,7 +181,7 @@ export async function benchRunHandler(ui: UIAdapter, args: string): Promise<void
 		total: tasks.length,
 	};
 	const isBatch = taskResultsStats.total > 1;
-	const selectedModel = requestedModel || "default"
+	const selectedModel = requestedModel || ""
 
 	initBatchBanner(ui, taskResultsStats.total, targets.join(" "), selectedModel);
 
