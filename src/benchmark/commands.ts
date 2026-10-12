@@ -13,15 +13,21 @@ export function formatCategorySummary(): string {
 }
 
 /** Parse `/bench-run` arguments into targets and model. */
-function parseArgs(args: string): { targets: string[]; requestedModel: string } {
+export function parseArgs(args: string): { targets: string[]; requestedModel: string } {
 	const parts = args.trim().split(/\s+/).filter(Boolean);
 	if (parts.length === 0) return { targets: [], requestedModel: "" };
 
 	const targets: string[] = [];
 	let requestedModel = "";
-	for (const part of parts) {
-		if (part.includes("/")) requestedModel = part;
-		else targets.push(part);
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i];
+		if (part === "--model") {
+			// Next token is the model value
+			i++;
+			requestedModel = parts[i];
+		} else {
+			targets.push(part);
+		}
 	}
 	return { targets, requestedModel };
 }
