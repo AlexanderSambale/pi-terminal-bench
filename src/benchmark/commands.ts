@@ -158,7 +158,7 @@ function resultForBatch(ui: UIAdapter, selectedModel: string, runLabel: string, 
 	const { results, taskResultsStats } = taskResults;
 	ui.setStatus(STATUS_KEY, undefined);
 	const ts = new Date().toISOString().replace(/[:.]/g, "-");
-	const resultFile = path.join(RESULTS_DIR, `run-${ts}.json`);
+	const resultFile = path.join(RESULTS_DIR, `run-${ts}-${selectedModel}.json`);
 	const pct = Math.round((taskResultsStats.passed / taskResultsStats.total) * 100);
 	writeFileSync(resultFile, JSON.stringify({ model: selectedModel, filter: runLabel, timestamp: new Date().toISOString(), summary: taskResultsStats, results }, null, 2));
 	ui.notify(`\n${"═".repeat(60)}\n  FINAL SCORE: ${taskResultsStats.passed}/${taskResultsStats.total} passed (${pct}%)\n  Model: ${selectedModel}\n  Failed: ${taskResultsStats.failed}\n  Results: ${resultFile}\n${"═".repeat(60)}`, taskResultsStats.failed === 0 ? "info" : "error");
