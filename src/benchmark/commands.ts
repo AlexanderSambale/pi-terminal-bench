@@ -100,14 +100,10 @@ function buildBanner(ui: UIAdapter, isBatch: boolean, current: number, total: nu
 	ui.notify(`\n${"═".repeat(60)}\n${progress}TASK: ${task.name}\n${task.description}\n${"═".repeat(60)}`, "info");
 }
 
-/** Live batch status line mid-loop. */
-function updateStatus(ui: UIAdapter, key: string, passed: number, idx: number, taskName: string, total: number): void {
-	ui.setStatus(key, `bench: ${passed}/${idx} passed | running ${taskName} (${idx + 1}/${total})`);
-}
-
 /** Batch percentage status line. */
 function updateBatchPct(ui: UIAdapter, key: string, passed: number, idx: number, total: number): void {
-	const pct = Math.round((passed / (idx + 1)) * 100);
+	if(idx == 0) return;
+	const pct = Math.round((passed / idx) * 100);
 	ui.setStatus(key, `bench: ${passed}/${idx} passed (${pct}%) | ${total - idx} remaining`);
 }
 
@@ -124,7 +120,6 @@ function checkAbort(ui: UIAdapter): boolean {
 
 function updateUIBeforeTask(ui: UIAdapter, isBatch: boolean, index: number, total: number, passed: number, task: TaskDef) {
 	buildBanner(ui, isBatch, index + 1, total, task);
-	if (isBatch) updateStatus(ui, STATUS_KEY, passed, index, task.name, total);
 }
 
 function updateUIAfterTask(ui: UIAdapter, isBatch: boolean, index: number, total: number, passed: number, task: TaskDef, result: TaskResult) {
